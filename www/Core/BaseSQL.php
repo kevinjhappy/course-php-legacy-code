@@ -1,4 +1,10 @@
 <?php
+declare(strict_types=1);
+
+namespace Legacy\Core;
+
+use PDO;
+
 class BaseSQL{
 
 	private $pdo;
@@ -8,7 +14,7 @@ class BaseSQL{
 		try{
 			$this->pdo = new PDO(DBDRIVER.":host=".DBHOST.";dbname=".DBNAME,DBUSER,DBPWD);
 			$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		}catch(Exception $e){
+		}catch(\Exception $e){
 			die("Erreur SQL : ".$e->getMessage());
 		}
 

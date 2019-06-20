@@ -1,4 +1,11 @@
 <?php
+declare(strict_types=1);
+
+namespace Legacy\Controllers;
+
+use Legacy\Core\Validator;
+use Legacy\Core\View;
+use Legacy\Models\Users;
 
 class UsersController{
 
@@ -31,7 +38,7 @@ class UsersController{
 			$form["errors"] = $validator->errors;
 
 			if(empty($errors)){
-				$user->setFirstname($data["firstname"]);	
+				$user->setFirstname($data["firstname"]);
 				$user->setLastname($data["lastname"]);
 				$user->setEmail($data["email"]);
 				$user->setPwd($data["pwd"]);
@@ -45,7 +52,7 @@ class UsersController{
 		$v = new View("addUser", "front");
 		$v->assign("form", $form);
 		
-		
+
 	}
 
 
