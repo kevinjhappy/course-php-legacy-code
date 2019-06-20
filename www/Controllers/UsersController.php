@@ -19,7 +19,6 @@ class UsersController
         $user = new Users();
         $form = $user->getRegisterForm();
 
-    
         $v = new View("addUser", "front");
         $v->assign("form", $form);
     }

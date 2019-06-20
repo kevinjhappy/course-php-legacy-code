@@ -5,6 +5,10 @@ namespace Legacy\Models;
 
 use Legacy\Core\BaseSQL;
 use Legacy\Core\Routing;
+use Legacy\ValueObject\EmailAddress;
+use Legacy\ValueObject\FirstName;
+use Legacy\ValueObject\LastName;
+use Legacy\ValueObject\Password;
 
 class Users extends BaseSQL
 {
@@ -13,38 +17,49 @@ class Users extends BaseSQL
     public $lastname;
     public $email;
     public $pwd;
+
+    // role 1 = user classic / role 2 = admin
     public $role=1;
+
+    // status O = inactive / status 1 = active
     public $status=0;
 
-    public function __construct()
-    {
+    public function __construct(
+        FirstName $firstName,
+        LastName $lastName,
+        Password $password,
+        EmailAddress $emailAddress
+    ) {
         parent::__construct();
+
+        $this->firstname = $firstName->getFirstName();
+        $this->lastname = $lastName->getLastName();
+        $this->email = $emailAddress->getEmailAddress();
+        $this->pwd = $password->getPassword();
     }
 
+    public function activate()
+    {
+        if ($this->status === 0) {
+            $this->status = 1;
+        }
+    }
 
-    public function setFirstname($firstname)
+    public function inactivate()
     {
-        $this->firstname = ucwords(strtolower(trim($firstname)));
+        if ($this->status === 1) {
+            $this->status = 0;
+        }
     }
-    public function setLastname($lastname)
+
+    public function upgradeToAdmin()
     {
-        $this->lastname = strtoupper(trim($lastname));
+        $this->role = 2;
     }
-    public function setEmail($email)
+
+    public function downgradeToClassicUser()
     {
-        $this->email = strtolower(trim($email));
-    }
-    public function setPwd($pwd)
-    {
-        $this->pwd = password_hash($pwd, PASSWORD_DEFAULT);
-    }
-    public function setRole($role)
-    {
-        $this->role = $role;
-    }
-    public function setStatus($status)
-    {
-        $this->status = $status;
+        $this->role = 1;
     }
 
     public function getRegisterForm()
@@ -57,7 +72,6 @@ class Users extends BaseSQL
                         "id"=>"",
                         "submit"=>"S'inscrire",
                         "reset"=>"Annuler" ],
-
 
                     "data"=>[
 

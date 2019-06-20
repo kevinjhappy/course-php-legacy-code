@@ -1,10 +1,10 @@
 <?php
 namespace Legacy;
 
+use Legacy\Controllers\PagesController;
 use Legacy\Core\Routing;
 
 require __DIR__.'/vendor/autoload.php';
-
 
 require "conf.inc.php";
 
@@ -26,12 +26,17 @@ spl_autoload_register("Legacy\myAutoloader");
 // Récupération des paramètres dans l'url - Routing
 $slug = explode("?", $_SERVER["REQUEST_URI"])[0];
 $routes = Routing::getRoute($slug);
+var_dump($routes);
 extract($routes);
+
+
+$pageController = new PagesController();
+$pageController->defaultAction();
 
 // Vérifie l'existence du fichier et de la classe pour charger le controlleur
 if (file_exists($cPath)) {
     include $cPath;
-    if (class_exists($c)) {
+    if (class_exists($c, true)) {
         //instancier dynamiquement le controller
         $cObject = new $c();
         //vérifier que la méthode (l'action) existe

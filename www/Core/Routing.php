@@ -16,7 +16,7 @@ class Routing
             }
             $c = ucfirst($routes[$slug]["controller"])."Controller";
             $a = $routes[$slug]["action"]."Action";
-            $cPath = "controllers/".$c.".class.php";
+            $cPath = "Controllers/".$c.".php";
         } else {
             return ["c"=>null, "a"=>null,"cPath"=>null ];
         }

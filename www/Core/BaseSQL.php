@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Legacy\Core;
 
+use mysql_xdevapi\Exception;
 use PDO;
 
 class BaseSQL
@@ -10,8 +11,11 @@ class BaseSQL
     private $pdo;
     private $table;
 
-    public function __construct()
+    public function __construct(PDO $pdo, string $table)
     {
+        $this->pdo = $pdo;
+        $this->table = $table;
+        /*
         try {
             $this->pdo = new PDO(DBDRIVER . ":host=" . DBHOST . ";dbname=" . DBNAME, DBUSER, DBPWD);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -20,64 +24,98 @@ class BaseSQL
         }
 
         $this->table = get_called_class();
+        */
     }
 
 
     public function setId($id)
     {
         $this->id = $id;
-        $this->getOneBy(["id" => $id], true);
+        $this->getOneByObject(["id" => $id]);
     }
 
     /**
      * @param array $where the where clause
-     * @param bool $object if it will return an array of results ou an object
-     * @return mixed
+     * @return array
      */
-    public function getOneBy(array $where, $object = false)
+    public function getOneByArray(array $where): array
     {
-        $sqlWhere = [];
-        foreach ($where as $key => $value) {
-            $sqlWhere[] = $key . "=:" . $key;
-        }
-        $sql = " SELECT * FROM " . $this->table . " WHERE  " . implode(" AND ", $sqlWhere) . ";";
-        $query = $this->pdo->prepare($sql);
-
-        if ($object) {
-            $query->setFetchMode(PDO::FETCH_INTO, $this);
-        } else {
-            $query->setFetchMode(PDO::FETCH_ASSOC);
-        }
+        $query = $this->prepareQuery($where);
+        $query->setFetchMode(PDO::FETCH_ASSOC);
         $query->execute($where);
 
         return $query->fetch();
     }
 
+    public function getOneByObject(array $where): self
+    {
+        $query = $this->prepareQuery($where);
+        $query->setFetchMode(PDO::FETCH_INTO, $this);
+        $query->execute($where);
 
-    public function save()
+        return $query->fetch();
+    }
+
+    private function prepareQuery(array $conditionList): \PDOStatement
+    {
+        $sqlWhere = [];
+        foreach ($conditionList as $key => $value) {
+            $sqlWhere[] = $key . "=:" . $value;
+        }
+        $sql = " SELECT * FROM " . $this->table . " WHERE  " . implode(" AND ", $sqlWhere) . ";";
+        $query = $this->pdo->prepare($sql);
+
+        if ($query === false) {
+            // TODO custom Exception
+            throw new \Exception();
+        }
+
+        return $query;
+    }
+
+    public function save(): bool
     {
         $dataObject = get_object_vars($this);
         $dataChild = array_diff_key($dataObject, get_class_vars(get_class()));
 
-        if (is_null($dataChild["id"])) {
-            $sql = "INSERT INTO " . $this->table . " ( " .
-                implode(",", array_keys($dataChild)) . ") VALUES ( :" .
-                implode(",:", array_keys($dataChild)) . ")";
+        $sql = $this->getQueryToSave($dataChild);
+        $query = $this->pdo->prepare($sql);
 
-            $query = $this->pdo->prepare($sql);
-            $query->execute($dataChild);
-        } else {
-            $sqlUpdate = [];
-            foreach ($dataChild as $key => $value) {
-                if ($key != "id") {
-                    $sqlUpdate[] = $key . "=:" . $key;
-                }
-            }
-
-            $sql = "UPDATE " . $this->table . " SET " . implode(",", $sqlUpdate) . " WHERE id=:id";
-
-            $query = $this->pdo->prepare($sql);
-            $query->execute($dataChild);
+        if ($query === false) {
+            // TODO custom Exception
+            throw new \Exception("Error during the prepare of Insert");
         }
+
+        return $query->execute($dataChild);
+    }
+
+    private function prepareInsert(array $parameters): string
+    {
+        $sql = "INSERT INTO " . $this->table . " ( " .
+            implode(",", array_keys($parameters)) . ") VALUES ( :" .
+            implode(",:", array_keys($parameters)) . ")";
+
+        return $sql;
+    }
+
+    private function prepareUpdate(array $dataChild): string
+    {
+        $sqlUpdate = [];
+        foreach ($dataChild as $key => $value) {
+            if ($key != "id") {
+                $sqlUpdate[] = $key . "=:" . $key;
+            }
+        }
+
+        return "UPDATE " . $this->table . " SET " . implode(",", $sqlUpdate) . " WHERE id=:id";
+    }
+
+    private function getQueryToSave($dataChild)
+    {
+        if (is_null($dataChild['id'])) {
+            return $this->prepareInsert($dataChild);
+        }
+
+        return $this->prepareUpdate($dataChild);
     }
 }
