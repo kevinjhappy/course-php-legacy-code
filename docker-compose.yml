@@ -3,7 +3,7 @@ services:
   web:
     build: docker/site
     ports:
-      - 80:80
+      - 8080:80
     volumes:
      - ./www:/var/www/html/
      - ./docker/server/000-default.conf:/etc/apache2/sites-available/000-default.conf
@@ -27,7 +27,7 @@ services:
     depends_on:
       - database
     ports:
-      - 8080:80
+      - 8081:81
     environment:
         - PMA_ARBITRARY=1
         
