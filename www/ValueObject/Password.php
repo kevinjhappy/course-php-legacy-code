@@ -1,9 +1,10 @@
 <?php
+declare(strict_types=1);
 
 namespace Legacy\ValueObject;
 
 
-class Password
+final class Password
 {
     private $password;
 

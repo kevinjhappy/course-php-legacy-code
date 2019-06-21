@@ -2,7 +2,7 @@
 
 namespace Legacy\ValueObject;
 
-class FirstName
+final class FirstName
 {
     private $firstName;
 

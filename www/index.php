@@ -33,6 +33,7 @@ extract($routes);
 $pageController = new PagesController();
 $pageController->defaultAction();
 
+
 // Vérifie l'existence du fichier et de la classe pour charger le controlleur
 if (file_exists($cPath)) {
     include $cPath;

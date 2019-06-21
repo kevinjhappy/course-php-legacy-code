@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Legacy\Models;
 
 use Legacy\Core\BaseSQL;
-use Legacy\Core\Routing;
 use Legacy\ValueObject\EmailAddress;
 use Legacy\ValueObject\FirstName;
 use Legacy\ValueObject\LastName;
@@ -12,25 +11,28 @@ use Legacy\ValueObject\Password;
 
 class Users extends BaseSQL
 {
+    private const TABLE_NAME = 'Users';
+
     public $id = null;
-    public $firstname;
-    public $lastname;
-    public $email;
-    public $pwd;
+    private $firstname;
+    private $lastname;
+    private $email;
+    private $pwd;
 
     // role 1 = user classic / role 2 = admin
-    public $role=1;
+    private $role=1;
 
     // status O = inactive / status 1 = active
-    public $status=0;
+    private $status=0;
 
     public function __construct(
         FirstName $firstName,
         LastName $lastName,
+        EmailAddress $emailAddress,
         Password $password,
-        EmailAddress $emailAddress
+        \PDO $pdo
     ) {
-        parent::__construct();
+        parent::__construct($pdo, self::TABLE_NAME);
 
         $this->firstname = $firstName->getFirstName();
         $this->lastname = $lastName->getLastName();
@@ -62,69 +64,53 @@ class Users extends BaseSQL
         $this->role = 1;
     }
 
-    public function getRegisterForm()
+    public function checkIdExist()
     {
-        return [
-                    "config"=>[
-                        "method"=>"POST",
-                        "action"=>Routing::getSlug("Users", "save"),
-                        "class"=>"",
-                        "id"=>"",
-                        "submit"=>"S'inscrire",
-                        "reset"=>"Annuler" ],
-
-                    "data"=>[
-
-                            "firstname"=>[
-                                "type"=>"text",
-                                "placeholder"=>"Votre Prénom",
-                                "required"=>true,
-                                "class"=>"form-control",
-                                "id"=>"firstname",
-                                "minlength"=>2,
-                                "maxlength"=>50,
-                                "error"=>"Le prénom doit faire entre 2 et 50 caractères"
-                            ],
-
-                            "lastname"=>["type"=>"text","placeholder"=>"Votre nom", "required"=>true, "class"=>"form-control", "id"=>"lastname","minlength"=>2,"maxlength"=>100,
-                                "error"=>"Le nom doit faire entre 2 et 100 caractères"],
-
-                            "email"=>["type"=>"email","placeholder"=>"Votre email", "required"=>true, "class"=>"form-control", "id"=>"email","maxlength"=>250,
-                                "error"=>"L'email n'est pas valide ou il dépasse les 250 caractères"],
-
-                            "pwd"=>["type"=>"password","placeholder"=>"Votre mot de passe", "required"=>true, "class"=>"form-control", "id"=>"pwd","minlength"=>6,
-                                "error"=>"Le mot de passe doit faire au minimum 6 caractères avec des minuscules, majuscules et chiffres"],
-
-                            "pwdConfirm"=>["type"=>"password","placeholder"=>"Confirmation", "required"=>true, "class"=>"form-control", "id"=>"pwdConfirm", "confirm"=>"pwd", "error"=>"Les mots de passe ne correspondent pas"]
-
-                    ]
-
-                ];
+        return $this->id !== null;
     }
 
-    public function getLoginForm()
+    public function createId(int $id)
     {
-        return [
-                    "config"=>[
-                        "method"=>"POST",
-                        "action"=>"",
-                        "class"=>"",
-                        "id"=>"",
-                        "submit"=>"Se connecter",
-                        "reset"=>"Annuler" ],
+        if (!$this->checkIdExist()) {
+            $this->id = $id;
+        }
+    }
 
+    /**
+     * @return null
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
-                    "data"=>[
+    public function getFirstname(): string
+    {
+        return $this->firstname;
+    }
 
-                            "email"=>["type"=>"email","placeholder"=>"Votre email", "required"=>true, "class"=>"form-control", "id"=>"email",
-                                "error"=>"L'email n'est pas valide"],
+    public function getLastname(): string
+    {
+        return $this->lastname;
+    }
 
-                            "pwd"=>["type"=>"password","placeholder"=>"Votre mot de passe", "required"=>true, "class"=>"form-control", "id"=>"pwd",
-                                "error"=>"Veuillez préciser un mot de passe"]
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
 
+    public function getPwd(): string
+    {
+        return $this->pwd;
+    }
 
-                    ]
+    public function getRole(): int
+    {
+        return $this->role;
+    }
 
-                ];
+    public function getStatus(): int
+    {
+        return $this->status;
     }
 }

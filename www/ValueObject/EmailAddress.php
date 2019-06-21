@@ -3,7 +3,7 @@
 namespace Legacy\ValueObject;
 
 
-class EmailAddress
+final class EmailAddress
 {
     private $emailAddress;
 

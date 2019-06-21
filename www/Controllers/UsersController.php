@@ -5,10 +5,26 @@ namespace Legacy\Controllers;
 
 use Legacy\Core\Validator;
 use Legacy\Core\View;
+use Legacy\Models\FormCreation;
 use Legacy\Models\Users;
+use Legacy\ValueObject\EmailAddress;
+use Legacy\ValueObject\FirstName;
+use Legacy\ValueObject\LastName;
+use Legacy\ValueObject\Password;
 
 class UsersController
 {
+    private $formCreation;
+    private $pdo;
+
+    public function __construct(
+        LoginRegisterInterface $formCreation,
+        \PDO $pdo
+    ) {
+        $this->formCreation = $formCreation;
+        $this->pdo = $pdo;
+    }
+
     public function defaultAction()
     {
         echo "users default";
@@ -16,8 +32,7 @@ class UsersController
     
     public function addAction()
     {
-        $user = new Users();
-        $form = $user->getRegisterForm();
+        $form = $this->formCreation->getRegisterForm();
 
         $v = new View("addUser", "front");
         $v->assign("form", $form);
@@ -25,8 +40,8 @@ class UsersController
 
     public function saveAction()
     {
-        $user = new Users();
-        $form = $user->getRegisterForm();
+        $formCreation = new FormCreation();
+        $form = $formCreation->getRegisterForm();
         $method = strtoupper($form["config"]["method"]);
         $data = $GLOBALS["_".$method];
 
@@ -36,10 +51,13 @@ class UsersController
             $form["errors"] = $validator->errors;
 
             if (empty($errors)) {
-                $user->setFirstname($data["firstname"]);
-                $user->setLastname($data["lastname"]);
-                $user->setEmail($data["email"]);
-                $user->setPwd($data["pwd"]);
+                $user = new Users(
+                    new FirstName($data["firstname"]),
+                    new LastName($data["lastname"]),
+                    new EmailAddress($data["email"]),
+                    new Password($data["pwd"]),
+                    $this->pdo
+                );
                 $user->save();
             }
         }
@@ -51,10 +69,8 @@ class UsersController
 
     public function loginAction()
     {
-        $user = new Users();
-        $form = $user->getLoginForm();
-
-
+        $formCreation = new FormCreation();
+        $form = $formCreation->getLoginForm();
 
         $method = strtoupper($form["config"]["method"]);
         $data = $GLOBALS["_".$method];
